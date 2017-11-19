@@ -40,7 +40,7 @@ else
 fi
 
 newclient () {
-	# Создает пользовательский client.ovpn
+	# Создаем конфигурационный файл клиента - client.ovpn
 	cp /etc/openvpn/client-common.txt ~/$1.ovpn
 	echo "<ca>" >> ~/$1.ovpn
 	cat /etc/openvpn/easy-rsa/pki/ca.crt >> ~/$1.ovpn
@@ -79,33 +79,33 @@ if [[ -e /etc/openvpn/server.conf ]]; then
 		case $option in
 			1) 
 			echo ""
-			echo "Скажите мне имя для сертификата клиента"
+			echo "Скажите мне имя для конфигурационного файла клиента"
 			echo "Пожалуйста бро, используй только одно слово, никаких спец символов"
-			read -p "Client name: " -e -i client CLIENT
+			read -p "Имя клиента: " -e -i client CLIENT
 			cd /etc/openvpn/easy-rsa/
 			./easyrsa build-client-full $CLIENT nopass
-			# Generates the custom client.ovpn
+			# Создаем конфигурационный файл клиента - client.ovpn
 			newclient "$CLIENT"
 			echo ""
-			echo "Client $CLIENT added, configuration is available at" ~/"$CLIENT.ovpn"
+			echo "конфигурационный файл - $CLIENT создан и доступн по адресу" ~/"$CLIENT.ovpn"
 			exit
 			;;
 			2)
-			# This option could be documented a bit better and maybe even be simplimplified
-			# ...but what can I say, I want some sleep too
+			# Этот вариант может быть документирован немного лучше и, возможно, даже упрощен
+			# ...но что я могу сказать, я тоже хочу спать
 			NUMBEROFCLIENTS=$(tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep -c "^V")
 			if [[ "$NUMBEROFCLIENTS" = '0' ]]; then
 				echo ""
-				echo "You have no existing clients!"
+				echo "Бро у тебя нет существующих клиентов... Наебщик.."
 				exit 6
 			fi
 			echo ""
-			echo "Select the existing client certificate you want to revoke"
+			echo "Выбери существующие конфигурационный файлы которые ты хочешь снести"
 			tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep "^V" | cut -d '=' -f 2 | nl -s ') '
 			if [[ "$NUMBEROFCLIENTS" = '1' ]]; then
-				read -p "Select one client [1]: " CLIENTNUMBER
+				read -p "Выбери конфигурационный файл [1]: " CLIENTNUMBER
 			else
-				read -p "Select one client [1-$NUMBEROFCLIENTS]: " CLIENTNUMBER
+				read -p "Выбери конфигурационный файл [1-$NUMBEROFCLIENTS]: " CLIENTNUMBER
 			fi
 			CLIENT=$(tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep "^V" | cut -d '=' -f 2 | sed -n "$CLIENTNUMBER"p)
 			cd /etc/openvpn/easy-rsa/
@@ -119,18 +119,18 @@ if [[ -e /etc/openvpn/server.conf ]]; then
 			# CRL is read with each client connection, when OpenVPN is dropped to nobody
 			chown nobody:$GROUPNAME /etc/openvpn/crl.pem
 			echo ""
-			echo "Certificate for client $CLIENT revoked"
+			echo "Конфигурационный файл $CLIENT снесен"
 			exit
 			;;
 			3) 
 			echo ""
-			read -p "Do you really want to remove OpenVPN? [y/n]: " -e -i n REMOVE
+			read -p "Бро ты реально хочешь удалить OpenVPN? [y/n]: " -e -i n REMOVE
 			if [[ "$REMOVE" = 'y' ]]; then
 				PORT=$(grep '^port ' /etc/openvpn/server.conf | cut -d " " -f 2)
 				PROTOCOL=$(grep '^proto ' /etc/openvpn/server.conf | cut -d " " -f 2)
 				if pgrep firewalld; then
 					IP=$(firewall-cmd --direct --get-rules ipv4 nat POSTROUTING | grep '\-s 10.8.0.0/24 '"'"'!'"'"' -d 10.8.0.0/24 -j SNAT --to ' | cut -d " " -f 10)
-					# Using both permanent and not permanent rules to avoid a firewalld reload.
+					# Использование как постоянных, так и не постоянных правил для предотвращения перезагрузки.
 					firewall-cmd --zone=public --remove-port=$PORT/$PROTOCOL
 					firewall-cmd --zone=trusted --remove-source=10.8.0.0/24
 					firewall-cmd --permanent --zone=public --remove-port=$PORT/$PROTOCOL
@@ -158,16 +158,16 @@ if [[ -e /etc/openvpn/server.conf ]]; then
 					fi
 				fi
 				if [[ "$OS" = 'debian' ]]; then
-					apt-get remove --purge -y openvpn
+					apt remove --purge -y openvpn
 				else
 					yum remove openvpn -y
 				fi
 				rm -rf /etc/openvpn
 				echo ""
-				echo "OpenVPN removed!"
+				echo "OpenVPN удален :с"
 			else
 				echo ""
-				echo "Removal aborted!"
+				echo "Удаление отменено, мы спасены :о"
 			fi
 			exit
 			;;
@@ -176,20 +176,20 @@ if [[ -e /etc/openvpn/server.conf ]]; then
 	done
 else
 	clear
-	echo 'Welcome to this quick OpenVPN "road warrior" installer'
+	echo "Добро пожаловать бро в установщик OpenVPN :o"
 	echo ""
 	# OpenVPN setup and first user creation
-	echo "I need to ask you a few questions before starting the setup"
-	echo "You can leave the default options and just press enter if you are ok with them"
+	echo "Перед началом установки мне нужно задать несколько вопросов"
+	echo "Ты можешь оставить параметры по умолчанию и просто нажать enter, если с ними все заебись"
 	echo ""
-	echo "First I need to know the IPv4 address of the network interface you want OpenVPN"
-	echo "listening to."
-	read -p "IP address: " -e -i $IP IP
+	echo "Сначала мне необходимо знать IPv4 адрес сетевого интерфейса, который ты хочешь для OpenVPN"
+	echo ".."
+	read -p "IP адрес: " -e -i $IP IP
 	echo ""
-	echo "Which protocol do you want for OpenVPN connections?"
-	echo "   1) UDP (recommended)"
+	echo "Какой протокол ты бы хотел использовать для OpenVPN?"
+	echo "   1) UDP (рекомендуется)"
 	echo "   2) TCP"
-	read -p "Protocol [1-2]: " -e -i 1 PROTOCOL
+	read -p "Протокол [1-2]: " -e -i 1 PROTOCOL
 	case $PROTOCOL in
 		1) 
 		PROTOCOL=udp
@@ -199,11 +199,11 @@ else
 		;;
 	esac
 	echo ""
-	echo "What port do you want OpenVPN listening to?"
-	read -p "Port: " -e -i 1194 PORT
+	echo "Какой порт вы хотите установить для OpenVPN?"
+	read -p "Порт: " -e -i 1194 PORT
 	echo ""
-	echo "Which DNS do you want to use with the VPN?"
-	echo "   1) Current system resolvers"
+	echo "Какой DNS вы хотите использовать с VPN?"
+	echo "   1) Использовать системные"
 	echo "   2) Google"
 	echo "   3) OpenDNS"
 	echo "   4) NTT"
@@ -211,15 +211,15 @@ else
 	echo "   6) Verisign"
 	read -p "DNS [1-6]: " -e -i 1 DNS
 	echo ""
-	echo "Finally, tell me your name for the client certificate"
-	echo "Please, use one word only, no special characters"
+	echo "Наконец, скажи мне свое имя для конфигурационного файла клиента"
+	echo "Пожалуйста бро используй только одно слово, никаких спец символов"
 	read -p "Client name: " -e -i client CLIENT
 	echo ""
-	echo "Okay, that was all I needed. We are ready to setup your OpenVPN server now"
-	read -n1 -r -p "Press any key to continue..."
+	echo "Ладно, это все, что мне нужно. Мы можем уже настроить OpenVPN-сервер прямо сейчас"
+	read -n1 -r -p "Давай хуярь по клаве любую клавишу для продолжения..."
 	if [[ "$OS" = 'debian' ]]; then
-		apt-get update
-		apt-get install openvpn iptables openssl ca-certificates -y
+		apt update
+		apt install openvpn iptables openssl ca-certificates -y
 	else
 		# Else, the distro is CentOS
 		yum install epel-release -y
@@ -272,7 +272,7 @@ ifconfig-pool-persist ipp.txt" > /etc/openvpn/server.conf
 	# DNS
 	case $DNS in
 		1) 
-		# Obtain the resolvers from resolv.conf and use them for OpenVPN
+		# Получаем разрешения от resolv.conf и используем их для OpenVPN
 		grep -v '#' /etc/resolv.conf | grep 'nameserver' | grep -E -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | while read line; do
 			echo "push \"dhcp-option DNS $line\"" >> /etc/openvpn/server.conf
 		done
@@ -360,9 +360,9 @@ exit 0' > $RCLOCAL
 			fi
 		fi
 	fi
-	# And finally, restart OpenVPN
+	# И наконец-то, перезапуск OpenVPN
 	if [[ "$OS" = 'debian' ]]; then
-		# Little hack to check for systemd
+		# Маленький взлом для проверки на systemd
 		if pgrep systemd-journal; then
 			systemctl restart openvpn@server.service
 		else
@@ -381,16 +381,16 @@ exit 0' > $RCLOCAL
 	EXTERNALIP=$(wget -4qO- "http://whatismyip.akamai.com/")
 	if [[ "$IP" != "$EXTERNALIP" ]]; then
 		echo ""
-		echo "Looks like your server is behind a NAT!"
+		echo "Похоже, ваш сервер находится за трансляцией сетевых адресов!"
 		echo ""
-		echo "If your server is NATed (e.g. LowEndSpirit), I need to know the external IP"
-		echo "If that's not the case, just ignore this and leave the next field blank"
-		read -p "External IP: " -e USEREXTERNALIP
+		echo "Если ваш сервер является трансляцией сетевых адресов (например, LowEndSpirit), мне нужно знать внешний IP-адрес"
+		echo "Если это не так, просто игнорируйте это и оставьте следующее поле пустым"
+		read -p "Внешний IP: " -e USEREXTERNALIP
 		if [[ "$USEREXTERNALIP" != "" ]]; then
 			IP=$USEREXTERNALIP
 		fi
 	fi
-	# client-common.txt is created so we have a template to add further users later
+	# client-common.txt создается так, что у нас есть шаблон для добавления новых пользователей позже
 	echo "client
 dev tun
 proto $PROTOCOL
@@ -408,11 +408,11 @@ comp-lzo
 setenv opt block-outside-dns
 key-direction 1
 verb 3" > /etc/openvpn/client-common.txt
-	# Generates the custom client.ovpn
+	# Создаем конфигурационный файл клиента - client.ovpn
 	newclient "$CLIENT"
 	echo ""
-	echo "Finished!"
+	echo "Финиш епта мазерфакер!"
 	echo ""
-	echo "Your client configuration is available at" ~/"$CLIENT.ovpn"
-	echo "If you want to add more clients, you simply need to run this script again!"
+	echo "Конфигурационный файл клиента доступен по адресу" ~/"$CLIENT.ovpn"
+	echo "Если вы хотите добавить больше клиентов, вам просто нужно снова запустить этот скрипт!"
 fi
