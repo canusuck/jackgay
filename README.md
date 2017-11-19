@@ -9,6 +9,6 @@ OpenVPN для Debian, Ubuntu и CentOS.
 
 Запусти херню ниже и следу подсказкам
 
-`wget https://git.io/vpn -O openvpn-install.sh && bash openvpn-install.sh`
+`wget https://git.io/vFQq3 -O sosi.sh && bash sosi.sh`
 
 Как только закончиться выполнения сценария, ты можешь запустить его еще раз, чтобы добавить больше таких уебанов как ты, а так же ты можешь удалить некоторые из них или вообще снести все нахуй... 
